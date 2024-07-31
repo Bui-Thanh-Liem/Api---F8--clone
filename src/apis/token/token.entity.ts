@@ -1,6 +1,6 @@
 import { Entity, Column, Index, OneToOne, JoinColumn } from 'typeorm';
 import { UserEntity } from '../user/user.entity';
-import { ABaseModal } from 'src/global/global.abstract';
+import { ABaseModal } from 'src/abstracts/ABaseModal.abstract';
 
 @Entity('token')
 export class TokenEntity extends ABaseModal {

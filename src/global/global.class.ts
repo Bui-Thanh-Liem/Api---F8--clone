@@ -1,8 +1,7 @@
 import { ReasonPhrases } from 'http-status-codes';
 
 export class ResponseData<D> {
-  data: D | D[];
-  message: string;
+  data: D | D[];  message: string;
   statusCode: number;
   reasonStatusCode?: ReasonPhrases;
 

@@ -6,9 +6,13 @@ interface IDataSendMail {
   mailTo: string;
   html: string;
 }
-export function sendMail({ mailTo, html }: IDataSendMail): Promise<SMTPTransport.SentMessageInfo> {
+export async function sendMail({
+  mailTo,
+  html,
+}: IDataSendMail): Promise<SMTPTransport.SentMessageInfo> {
+
   if (!process.env.ROOT_MAIL || !process.env.ROOT_MAIL_PASSWORD) {
-    throw new BadRequestException('Send mail failed');
+    throw new BadRequestException('No ROOT_MAIL or ROOT_MAIL_PASSWORD');
   }
 
   const transporter = nodeMailer.createTransport({
@@ -21,7 +25,7 @@ export function sendMail({ mailTo, html }: IDataSendMail): Promise<SMTPTransport
     },
   });
 
-  const info = transporter.sendMail({
+  const info = await transporter.sendMail({
     from: `BTL' App study-nestjs ${process.env.ROOT_MAIL}`,
     to: mailTo,
     subject: "BTL' App study-nestjs",

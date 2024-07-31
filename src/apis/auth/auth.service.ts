@@ -3,17 +3,18 @@ import { Request } from 'express';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserEntity } from '../user/user.entity';
-import { LoginDto } from './auth.dto';
+import { LoginDto, ResetPasswordDto } from './auth.dto';
 import { IResponseLogin } from 'src/interfaces/response/response.interface';
 import * as bcrypt from 'bcrypt';
 import { TokenService } from '../token/token.service';
-import { IDataUser } from 'src/interfaces/common/commom.interface';
+import { OtpService } from '../otp/otp.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(UserEntity)
-    private userRepository: Repository<UserEntity>,
+    private readonly userRepository: Repository<UserEntity>,
+    private readonly otpService: OtpService,
     private tokenService: TokenService,
   ) {}
 
@@ -69,6 +70,38 @@ export class AuthService {
 
     //
     req['user'] = null;
+    return true;
+  }
+
+  async resetPassword(dataForm: ResetPasswordDto): Promise<boolean> {
+    //
+    if (dataForm.password !== dataForm.password_confirm) {
+      throw new BadRequestException('Confirmation password is incorrect');
+    }
+
+    //
+    const findOtpByEmail = await this.otpService.findOneOtpByEmail(
+      dataForm.email,
+    );
+    if (!findOtpByEmail) {
+      throw new BadRequestException(
+        'There is no session with this email address',
+      );
+    }
+
+    if (!findOtpByEmail.isConfirm) {
+      throw new BadRequestException('The session has ended');
+    } else {
+      const salt = await bcrypt.genSalt();
+      const hashedPassword = await bcrypt.hash(dataForm.password, salt);
+      await this.userRepository
+        .createQueryBuilder()
+        .update(UserEntity)
+        .where('email = :email', { email: findOtpByEmail.email })
+        .set({ password: hashedPassword })
+        .execute();
+      await this.otpService.deleteOtpByEmail(findOtpByEmail.email);
+    }
     return true;
   }
 

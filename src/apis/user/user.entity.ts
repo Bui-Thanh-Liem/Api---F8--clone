@@ -1,4 +1,4 @@
-import { ABaseModal } from 'src/global/global.abstract';
+import { ABaseModal } from 'src/abstracts/ABaseModal.abstract';
 import { Column, Entity } from 'typeorm';
 
 @Entity('user')

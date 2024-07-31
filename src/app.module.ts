@@ -4,31 +4,38 @@ import {
   NestModule,
   RequestMethod,
 } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserModule } from './apis/user/user.module';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { UserEntity } from './apis/user/user.entity';
 import { DataSource } from 'typeorm';
 import { PassportModule } from '@nestjs/passport';
 import { AuthModule } from './apis/auth/auth.module';
-import { TokenEntity } from './apis/token/token.entity';
 import { LoggerMiddleware } from './middlewares/logger.middleware';
 import { AuthController } from './apis/auth/auth.controller';
+import { OtpModule } from './apis/otp/otp.module';
+import mysqlConfig from './config/mysql.config';
+import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot({
-      type: 'mysql',
-      host: process.env.HOST_DB || 'localhost',
-      port: Number(process.env.PORT_DB) || 3306,
-      username: process.env.USERNAME_DB || 'root',
-      password: process.env.PASSWORD_DB || 'BuiThanhLiem@113',
-      database: process.env.NAME_DB || 'study-nestjs',
-      entities: [UserEntity, TokenEntity],
-      synchronize: true,
+    // Configs
+    ConfigModule.forRoot({
+      envFilePath: '.env.dev',
+      isGlobal: true,
+      load: [mysqlConfig],
     }),
+
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) =>
+        configService.get<TypeOrmModuleOptions>("mysql-config"),
+      inject: [ConfigService],
+    }),
+
+    //
     PassportModule,
     UserModule,
     AuthModule,
+    OtpModule,
   ],
   controllers: [],
   providers: [],

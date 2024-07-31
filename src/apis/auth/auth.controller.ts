@@ -9,7 +9,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
-import { LoginDto } from './auth.dto';
+import { LoginDto, ResetPasswordDto } from './auth.dto';
 import { AuthService } from './auth.service';
 import { Request, Response } from 'express';
 import { CookieHelper } from 'src/helpers/cookie.helper';
@@ -49,6 +49,19 @@ export class AuthController {
     CookieHelper.clearCookei({ name: 'token', res });
     res.status(200).json({
       message: 'Logout successful',
+    });
+  }
+
+  @Post('forgot-password')
+  @ApiOperation({ summary: 'Reset Password' })
+  async forgotPassword(
+    @Body() dataForm: ResetPasswordDto,
+    @Res() res: Response,
+  ) {
+    await this.authService.resetPassword(dataForm);
+    res.status(200).json({
+      message: 'Reset Password successful',
+      statusCode: 200,
     });
   }
 

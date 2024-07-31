@@ -5,7 +5,7 @@ import { UserEntity } from './user.entity';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 
-Injectable();
+Injectable()
 export class UserService {
   constructor(
     @InjectRepository(UserEntity)
@@ -71,5 +71,10 @@ export class UserService {
     }
     await this.userRepository.delete(id);
     return true;
+  }
+
+  async findUserByEmail(email: string): Promise<UserEntity> {
+    const user = await this.userRepository.findOne({where: { email: email } });
+    return user;
   }
 }
