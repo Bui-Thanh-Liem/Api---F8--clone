@@ -4,7 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserEntity } from '../user/user.entity';
 import { LoginDto, ResetPasswordDto } from './auth.dto';
-import { IResponseLogin } from 'src/interfaces/response/response.interface';
+import { IResponseLogin } from 'src/interfaces/common/commom.interface';
 import * as bcrypt from 'bcrypt';
 import { TokenService } from '../token/token.service';
 import { OtpService } from '../otp/otp.service';
@@ -92,7 +92,7 @@ export class AuthService {
     if (!findOtpByEmail.isConfirm) {
       throw new BadRequestException('The session has ended');
     } else {
-      const salt = await bcrypt.genSalt();
+      const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(dataForm.password, salt);
       await this.userRepository
         .createQueryBuilder()

@@ -23,7 +23,7 @@ export class OtpController {
   }
 
   @Post('sendOtp')
-  @ApiOperation({ summary: 're-send otp' })
+  @ApiOperation({ summary: 'Send otp' })
   async sendOtp(@Body() dataSendEmail: SendOtpDto, @Res() res: Response) {
     await this.otpService.sendOtp(dataSendEmail.email, dataSendEmail.otpCode);
 

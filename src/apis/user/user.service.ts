@@ -4,15 +4,16 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from './user.entity';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
+import { IGetManyItem } from 'src/interfaces/common/commom.interface';
 
-Injectable()
+Injectable();
 export class UserService {
   constructor(
     @InjectRepository(UserEntity)
     private userRepository: Repository<UserEntity>,
   ) {}
 
-  async createUser(dataForm: UserDto): Promise<Partial<UserEntity>> {
+  async create(dataForm: UserDto): Promise<UserEntity> {
     const findUserByEmail = await this.userRepository.findOne({
       where: { email: dataForm.email },
       // where: [{ email: dataForm.email  }, { fullname: dataForm.fullname  }],
@@ -21,25 +22,27 @@ export class UserService {
       throw new BadRequestException('Email already exists');
     }
 
+    // Otp
+
     // Hash password
-    const salt = await bcrypt.genSalt();
+    const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(dataForm.password, salt);
 
     const user = this.userRepository.create({
       ...dataForm,
       password: hashedPassword,
     });
-    const { password, ...res } = await this.userRepository.save(user);
-    return res;
+    // const { password, ...res } = await this.userRepository.save(user);
+    return await this.userRepository.save(user);
   }
 
-  async updateUser(id: string, dataForm: UserDto): Promise<UserEntity> {
+  async update(id: string, dataForm: UserDto): Promise<UserEntity> {
     //
     const findUser = await this.userRepository.findOne({
       where: { id },
     });
     if (!findUser) {
-      return findUser;
+      throw new BadRequestException(`Not found user with id ${id} !`);
     }
 
     //
@@ -50,11 +53,17 @@ export class UserService {
     return this.userRepository.save(findUser);
   }
 
-  getUserList(): Promise<UserEntity[]> {
-    return this.userRepository.find();
+  async findAll(): Promise<IGetManyItem<UserEntity>> {
+    const [users, totals] = await this.userRepository
+      .createQueryBuilder('user')
+      .getManyAndCount();
+    return {
+      items: users,
+      totalItems: totals,
+    };
   }
 
-  async getUserDetails(id: string): Promise<UserEntity> {
+  async findOneById(id: string): Promise<UserEntity> {
     const user = await this.userRepository.findOne({ where: { id } });
     if (!user) {
       throw new BadRequestException('User not found');
@@ -62,7 +71,7 @@ export class UserService {
     return user;
   }
 
-  async deleteUser(id: string): Promise<boolean> {
+  async delete(id: string): Promise<boolean> {
     const findUser = await this.userRepository.findOne({
       where: { id },
     });
@@ -74,7 +83,7 @@ export class UserService {
   }
 
   async findUserByEmail(email: string): Promise<UserEntity> {
-    const user = await this.userRepository.findOne({where: { email: email } });
+    const user = await this.userRepository.findOne({ where: { email: email } });
     return user;
   }
 }

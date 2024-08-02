@@ -7,13 +7,14 @@ import {
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserModule } from './apis/user/user.module';
 import { DataSource } from 'typeorm';
-import { PassportModule } from '@nestjs/passport';
 import { AuthModule } from './apis/auth/auth.module';
 import { LoggerMiddleware } from './middlewares/logger.middleware';
 import { AuthController } from './apis/auth/auth.controller';
 import { OtpModule } from './apis/otp/otp.module';
 import mysqlConfig from './config/mysql.config';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
+import { TasksModule } from './apis/tasks/tasks.module';
+import { PhotoModule } from './apis/photo/photo.module';
 
 @Module({
   imports: [
@@ -24,18 +25,20 @@ import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
       load: [mysqlConfig],
     }),
 
+    //
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) =>
-        configService.get<TypeOrmModuleOptions>("mysql-config"),
+        configService.get<TypeOrmModuleOptions>('mysql-config'),
       inject: [ConfigService],
     }),
 
     //
-    PassportModule,
     UserModule,
     AuthModule,
     OtpModule,
+    PhotoModule,
+    TasksModule,
   ],
   controllers: [],
   providers: [],

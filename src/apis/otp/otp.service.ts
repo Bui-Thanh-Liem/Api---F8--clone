@@ -1,10 +1,15 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import { ConfirmOtpDto, CreateSessionOtpDto } from './otp.dto';
 import { sendMail } from 'src/helpers/mail.helper';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { LessThan, Repository } from 'typeorm';
 import { OtpEntity } from './otp.entity';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class OtpService {
@@ -29,20 +34,23 @@ export class OtpService {
       throw new BadRequestException('User not exist !');
     }
 
-    // gui email
-    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date(Date.now() + 2 * 60 * 1000);
-
     // Delete code old for email
     await this.otpRepository.delete({ email: dataForm.email });
+
+    // Save database
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 2 * 60 * 1000);
+    const salt = await bcrypt.genSalt(10);
+    const hashOtp = await bcrypt.hash(otpCode, salt);
 
     //
     await this.otpRepository.save({
       email: dataForm.email,
-      otpCode: otpCode,
+      otpCode: hashOtp,
       expiresAt: expiresAt,
     });
 
+    // send otp
     const isSendOtp = await this.sendOtp(dataForm.email, otpCode);
 
     if (!isSendOtp) {
@@ -57,25 +65,39 @@ export class OtpService {
     const findOtp = await this.otpRepository.findOne({
       where: {
         email: dataForm.email,
-        otpCode: dataForm.otpCode,
       },
       order: { createdAt: 'DESC' },
     });
-    if (!findOtp || findOtp.expiresAt < new Date()) {
+
+    // nếu có mà thời gian hết hạn thì đợt database sẽ tự động xóa
+    if (!findOtp) {
+      throw new UnauthorizedException('Invalid or expired OTP');
+    }
+
+    //
+    const isValid = await bcrypt.compare(dataForm.otpCode, findOtp.otpCode);
+    if (!isValid && findOtp.expiresAt < new Date()) {
       throw new BadRequestException('Invalid or expired OTP');
     }
 
-    findOtp.isConfirm = true;
-
+    //
+    findOtp.isConfirm = isValid;
     return await this.otpRepository.save(findOtp);
   }
 
   async findOneOtpByEmail(email: string): Promise<OtpEntity> {
-    return await this.otpRepository.findOne({where: { email: email}});
+    return await this.otpRepository.findOne({ where: { email: email } });
   }
 
   async deleteOtpByEmail(email: string): Promise<boolean> {
-    const deletedOtp = await this.otpRepository.delete({email: email})
+    await this.otpRepository.delete({ email: email });
     return true;
+  }
+
+  async deleteExpiredRecords(): Promise<boolean> {
+    const result = await this.otpRepository.delete({
+      expiresAt: LessThan(new Date()),
+    });
+    if (result) return !!result;
   }
 }

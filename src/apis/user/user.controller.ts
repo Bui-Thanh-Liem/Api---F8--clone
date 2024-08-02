@@ -1,10 +1,10 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Delete,
   Get,
   Param,
+  Res,
   Patch,
   Post,
 } from '@nestjs/common';
@@ -14,6 +14,7 @@ import { HttpMessage, HttpStatusCode } from 'src/global/global.enum';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { UserDto } from './user.dto';
 import { UserEntity } from './user.entity';
+import { ResponseOk } from 'src/abstracts/ABaseResponse.abstract';
 
 @ApiTags('Users')
 @Controller('/users')
@@ -22,70 +23,59 @@ export class UserController {
 
   @Post()
   @ApiOperation({ summary: 'Create User' })
-  async createUser(@Body() dataForm: UserDto) {
-    const newUser = await this.userService.createUser(dataForm);
-    return new ResponseData<Partial<UserEntity>>(
-      newUser,
-      HttpMessage.SUCCESS,
-      HttpStatusCode.SUCCESS,
-    );
+  async create(@Body() dataForm: UserDto) {
+    const { password, ...newUser } = await this.userService.create(dataForm);
+
+    return new ResponseOk({
+      message: 'Created user successfully',
+      data: newUser,
+    });
   }
 
   @Patch('/:id')
   @ApiOperation({ summary: 'Update User' })
-  async updateUser(@Param('id') id: string, @Body() dataForm: UserDto) {
+  async update(@Param('id') id: string, @Body() dataForm: UserDto) {
     //
-    const updateUser = await this.userService.updateUser(id, dataForm);
+    const updateUser = await this.userService.update(id, dataForm);
 
     //
-    if (!updateUser) {
-      throw new BadRequestException(`Not found user with id ${id} !`);
-    }
-
-    //
-    return new ResponseData<UserEntity>(
-      updateUser,
-      HttpMessage.SUCCESS,
-      HttpStatusCode.SUCCESS,
-    );
+    return new ResponseOk({
+      message: 'Updated user successfully',
+      data: updateUser,
+    });
   }
 
   @Get()
   @ApiOperation({ summary: 'Get Users' })
-  async getUserList() {
+  async findAll() {
     //
-    const users = await this.userService.getUserList();
+    const users = await this.userService.findAll();
 
     //
-    if (!users) {
-      throw new BadRequestException('Empty users list');
-    }
-
-    //
-    return new ResponseData<UserEntity[]>(
-      users,
-      HttpMessage.SUCCESS,
-      HttpStatusCode.SUCCESS,
-    );
+    return new ResponseOk({
+      message: 'Get users successfully',
+      data: users,
+    });
   }
 
   @Get('/:id')
   @ApiOperation({ summary: 'Get Details User' })
-  async getUserDetails(@Param('id') id: string) {
-    return new ResponseData<UserEntity>(
-      await this.userService.getUserDetails(id),
-      HttpMessage.SUCCESS,
-      HttpStatusCode.SUCCESS,
-    );
+  async getDetails(@Param('id') id: string) {
+    const user = this.userService.findOneById(id);
+
+    return new ResponseOk({
+      message: 'Get user details successfully',
+      data: user,
+    });
   }
 
   @Delete('/:id')
   @ApiOperation({ summary: 'Delete User' })
-  async deleteUser(@Param('id') id: string) {
-    return new ResponseData<boolean>(
-      await this.userService.deleteUser(id),
-      HttpMessage.SUCCESS,
-      HttpStatusCode.SUCCESS,
-    );
+  async delete(@Param('id') id: string) {
+    const result = await this.userService.delete(id);
+    return new ResponseOk({
+      message: 'User deleted successfully',
+      data: result,
+    });
   }
 }
