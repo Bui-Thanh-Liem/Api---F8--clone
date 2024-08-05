@@ -4,6 +4,7 @@ import {
   ExecutionContext,
   NotAcceptableException,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { TokenService } from 'src/apis/token/token.service';
@@ -29,7 +30,7 @@ export class AuthGuard implements CanActivate {
     //
     try {
       const publicKey = (await this.tokenService.findTokeByCode(token))
-        .token_secretKey;
+        .token_keyAccess;
       const payload = await TokenHelper.verifyToken({
         token,
         publicKey,
@@ -38,7 +39,11 @@ export class AuthGuard implements CanActivate {
       request['user'] = payload;
       return true;
     } catch (error) {
-      throw new ForbiddenException('Invalid token');
+      if (error.message === 'jwt expired') {
+        throw new BadRequestException('Expired token');
+      } else {
+        throw new ForbiddenException('Invalid token');
+      }
     }
   }
 }

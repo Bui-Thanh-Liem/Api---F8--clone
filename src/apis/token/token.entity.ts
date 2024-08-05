@@ -6,10 +6,17 @@ import { ABaseModal } from 'src/abstracts/ABaseModal.abstract';
 export class TokenEntity extends ABaseModal {
   @Column('text') // chuỗi ký tự dài
   @Index({ fulltext: true }) // Định nghĩa một chỉ mục toàn văn
-  token_code: string;
+  token_access: string;
+
+  @Column('text') // chuỗi ký tự dài
+  @Index({ fulltext: true }) // Định nghĩa một chỉ mục toàn văn
+  token_refresh: string;
 
   @Column('text')
-  token_secretKey: string;
+  token_keyAccess: string;
+
+  @Column('text')
+  token_keyRefresh: string;
 
   @OneToOne(() => UserEntity) // 1 -1 to UserEntity
   @JoinColumn({ name: 'token_user_id' }) // foreign key

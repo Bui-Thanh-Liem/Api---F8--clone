@@ -56,7 +56,7 @@ export class AuthService {
   }
 
   async logout(req: Request): Promise<boolean> {
-    const me = await this.getMe(req);
+    const me = await req["user"];
 
     if (!me) {
       throw new BadRequestException('Logout failed');

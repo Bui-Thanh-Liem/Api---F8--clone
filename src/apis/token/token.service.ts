@@ -26,43 +26,35 @@ export class TokenService {
     };
 
     // Tạo key
-    const { privateKey, publicKey } = TokenHelper.generateKeyPair();
+    const { privateKey: privateKeyAccessToken, publicKey: publicKeyAccessToken } = TokenHelper.generateKeyPair();
+    const { privateKey: privateKeyAccessRefresh, publicKey: publicKeyAccessRefresh } = TokenHelper.generateKeyPair();
 
-    // Tạo token
-    const newToken = await TokenHelper.createToken({
-      privateKey,
+    // Tạo access token
+    const accessToken = await TokenHelper.createToken({
+      privateKey: privateKeyAccessToken,
       payload,
       jwtService: this.jwtService,
     });
 
-    // Lưu token vào database với id User
-    const dataToken = this.tokenRepository.create({
-      token_code: newToken,
-      token_secretKey: publicKey,
-      token_user: { id: user.id },
+    // Tạo refresh token
+    const refreshToken = await TokenHelper.createToken({
+      privateKey: privateKeyAccessRefresh,
+      payload,
+      jwtService: this.jwtService,
+      expiresIn: (365 * 24 * 60 * 60)
     });
 
-    const findToken = await this.findTokenByUser(user);
-    if (!findToken) {
-      // Lưu token mới vào database
-      const newToken = await this.tokenRepository.save(dataToken);
-      if (!newToken) {
-        throw new BadRequestException('Login failed');
-      }
-    } else {
-      // Cập nhật token cũ
-      const updateToken = await this.tokenRepository
-        .createQueryBuilder()
-        .update(TokenEntity)
-        .where('id = :id', { id: findToken.id })
-        .set({ token_code: newToken, token_secretKey: publicKey })
-        .execute();
-      if (!updateToken.affected) {
-        throw new BadRequestException('Login failed');
-      }
-    }
+    // Lưu token vào database với id User
+    const dataToken = this.tokenRepository.create({
+      token_access: accessToken,
+      token_keyRefresh: refreshToken,
+      token_keyAccess: publicKeyAccessToken,
+      token_refresh: publicKeyAccessRefresh,
+      token_user: { id: user.id },
+    });
+    await this.tokenRepository.save(dataToken);
 
-    return { token: newToken, user: payload };
+    return { token: accessToken, user: payload };
   }
 
   async findTokenByUser(user: UserEntity) {
@@ -73,7 +65,7 @@ export class TokenService {
 
   async findTokeByCode(code: string) {
     return await this.tokenRepository.findOne({
-      where: { token_code: code },
+      where: { token_access: code },
     });
   }
 
