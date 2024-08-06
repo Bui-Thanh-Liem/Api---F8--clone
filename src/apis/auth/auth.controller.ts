@@ -26,7 +26,7 @@ export class AuthController {
   @Post('/login')
   @UseInterceptors(new LoggingInterceptor())
   @ApiOperation({ summary: 'Login' })
-  @UseGuards(AuthGuard('local'))
+  @UseGuards(AuthGuard('auth'))
   async login(
     @Req() req: Request,
     @Body() dataForm: LoginDto,

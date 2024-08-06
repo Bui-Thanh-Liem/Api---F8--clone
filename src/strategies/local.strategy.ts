@@ -5,7 +5,7 @@ import { AuthService } from 'src/apis/auth/auth.service';
 import { IDataUser } from 'src/interfaces/common/commom.interface';
 
 @Injectable()
-export class LocalStrategy extends PassportStrategy(Strategy) {
+export class AuthStrategy extends PassportStrategy(Strategy, 'auth') {
   constructor(private authService: AuthService) {
     super({
       usernameField: 'email',
