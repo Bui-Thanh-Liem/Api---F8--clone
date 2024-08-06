@@ -43,15 +43,15 @@ export class OtpService {
     const salt = await bcrypt.genSalt(10);
     const hashOtp = await bcrypt.hash(otpCode, salt);
 
+    // send otp
+    const isSendOtp = await this.sendOtp(dataForm.email, otpCode);
+
     //
     await this.otpRepository.save({
       email: dataForm.email,
       otpCode: hashOtp,
       expiresAt: expiresAt,
     });
-
-    // send otp
-    const isSendOtp = await this.sendOtp(dataForm.email, otpCode);
 
     if (!isSendOtp) {
       throw new BadRequestException(

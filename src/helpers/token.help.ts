@@ -34,7 +34,7 @@ export class TokenHelper {
   }): Promise<string> {
     const newToken = await jwtService.signAsync(payload, {
       algorithm: 'RS256',
-      expiresIn: expiresIn || 60,
+      expiresIn: expiresIn || 60, // 1d
       secret: privateKey,
     });
     return newToken;

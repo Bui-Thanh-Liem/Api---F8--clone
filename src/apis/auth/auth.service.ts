@@ -1,13 +1,17 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserEntity } from '../user/user.entity';
 import { LoginDto, ResetPasswordDto } from './auth.dto';
-import { IResponseLogin } from 'src/interfaces/common/commom.interface';
+import {
+  IDataUser,
+  IResponseLogin,
+} from 'src/interfaces/common/commom.interface';
 import * as bcrypt from 'bcrypt';
 import { TokenService } from '../token/token.service';
 import { OtpService } from '../otp/otp.service';
+import { IUser } from 'src/interfaces/models/user.model';
 
 @Injectable()
 export class AuthService {
@@ -18,9 +22,9 @@ export class AuthService {
     private tokenService: TokenService,
   ) {}
 
-  async login(dataLogin: LoginDto): Promise<IResponseLogin> {
+  async validateUser(dataForm: LoginDto): Promise<IDataUser> {
     const findUserByEmail = await this.userRepository.findOne({
-      where: { email: dataLogin.email },
+      where: { email: dataForm.email },
       select: {
         id: true,
         email: true,
@@ -34,21 +38,26 @@ export class AuthService {
 
     //
     if (!findUserByEmail) {
-      throw new BadRequestException('User not exist !, please login again');
+      return null;
     }
 
     // Check password
     const isPassword = await bcrypt.compare(
-      dataLogin.password,
+      dataForm.password,
       findUserByEmail.password,
     );
     if (!isPassword) {
-      throw new BadRequestException('Password not match, please login again');
+      throw new BadRequestException('Password or email not match, please login again');
     }
+    return findUserByEmail;
+  }
 
+  async login(dataUser: IDataUser, res: Response): Promise<IResponseLogin> {
     //
-    const { token, user } =
-      await this.tokenService.createToken(findUserByEmail);
+    const { token, user } = await this.tokenService.createToken(
+      dataUser,
+      res,
+    );
     return {
       user: user,
       token: token,
@@ -56,7 +65,7 @@ export class AuthService {
   }
 
   async logout(req: Request): Promise<boolean> {
-    const me = await req["user"];
+    const me: Partial<IUser> = req['user'];
 
     if (!me) {
       throw new BadRequestException('Logout failed');
@@ -106,7 +115,7 @@ export class AuthService {
   }
 
   async getMe(req: Request) {
-    const dataUser = await req['user'];
+    const dataUser: Partial<IUser> = req['user'];
     //
     const user = await this.userRepository.findOne({
       where: { id: dataUser.id },

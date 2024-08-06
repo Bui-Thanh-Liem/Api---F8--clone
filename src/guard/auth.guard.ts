@@ -4,15 +4,14 @@ import {
   ExecutionContext,
   NotAcceptableException,
   ForbiddenException,
-  BadRequestException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { TokenService } from 'src/apis/token/token.service';
 import { TokenHelper } from 'src/helpers/token.help';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 
 @Injectable()
-export class AuthGuard implements CanActivate {
+export class JwtGuard implements CanActivate {
   constructor(
     private tokenService: TokenService,
     private jwtService: JwtService,
@@ -20,6 +19,7 @@ export class AuthGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
+    const response = context.switchToHttp().getResponse<Response>();
     const token = request.cookies?.['token'];
 
     //
@@ -40,7 +40,23 @@ export class AuthGuard implements CanActivate {
       return true;
     } catch (error) {
       if (error.message === 'jwt expired') {
-        throw new BadRequestException('Expired token');
+        const tokenRow = await this.tokenService.findTokeByCode(token);
+        const refreshToken = tokenRow.token_refresh;
+        const keyRefresh = tokenRow.token_keyRefresh;
+
+        const payload = await TokenHelper.verifyToken({
+          token: refreshToken,
+          publicKey: keyRefresh,
+          jwtService: this.jwtService,
+        });
+
+        // Create a new token (access, refresh save database)
+        await this.tokenService.createToken(payload, response);
+
+        // Set request
+        request['user'] = payload;
+        console.log('Het han roi');
+        return true;
       } else {
         throw new ForbiddenException('Invalid token');
       }

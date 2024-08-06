@@ -13,8 +13,10 @@ import { LoginDto, ResetPasswordDto } from './auth.dto';
 import { AuthService } from './auth.service';
 import { Request, Response } from 'express';
 import { CookieHelper } from 'src/helpers/cookie.helper';
-import { AuthGuard } from 'src/guard/auth.guard';
+import { AuthGuard } from '@nestjs/passport';
 import { LoggingInterceptor } from 'src/interceptors/logging.interceptor';
+import { IDataUser } from 'src/interfaces/common/commom.interface';
+import { JwtGuard } from 'src/guard/auth.guard';
 
 @Controller('/auth')
 @ApiTags('Auth')
@@ -24,14 +26,20 @@ export class AuthController {
   @Post('/login')
   @UseInterceptors(new LoggingInterceptor())
   @ApiOperation({ summary: 'Login' })
-  async login(@Body() dataLogin: LoginDto, @Res() res: Response) {
+  @UseGuards(AuthGuard('local'))
+  async login(
+    @Req() req: Request,
+    @Body() dataForm: LoginDto,
+    @Res() res: Response,
+  ) {
+    console.log('req:::', req);
+
     // login
-    const dataLogined = await this.authService.login(dataLogin);
+    const dataLogined = await this.authService.login(
+      req.user as IDataUser,
+      res,
+    );
 
-    // set token
-    CookieHelper.setCookie({ name: 'token', value: dataLogined.token, res });
-
-    // return
     res.status(200).json({
       message: 'Login successful',
       data: dataLogined,
@@ -40,7 +48,7 @@ export class AuthController {
   }
 
   @Post('/logout')
-  @UseGuards(AuthGuard)
+  @UseGuards(JwtGuard)
   @ApiOperation({ summary: 'Logout' })
   async logout(@Req() req: Request, @Res() res: Response) {
     await this.authService.logout(req);
@@ -66,7 +74,7 @@ export class AuthController {
   }
 
   @Get('/get-me')
-  @UseGuards(AuthGuard)
+  @UseGuards(JwtGuard)
   @ApiOperation({ summary: 'Get Me' })
   async getMe(@Req() req: Request, @Res() res: Response) {
     const me = await this.authService.getMe(req);
