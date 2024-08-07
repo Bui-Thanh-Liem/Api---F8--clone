@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -11,6 +12,8 @@ import { OtpEntity } from './otp.entity';
 import { InjectQueue } from '@nestjs/bull';
 import * as bcrypt from 'bcrypt';
 import { Queue } from 'bull';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 
 @Injectable()
 export class OtpService {
@@ -21,6 +24,9 @@ export class OtpService {
 
     @InjectQueue('send-mail')
     private queueSendMail: Queue,
+
+    @Inject(CACHE_MANAGER) 
+    private cacheManager: Cache 
   ) {}
 
   async sendOtp(email: string, otpCode: string) {
@@ -37,6 +43,9 @@ export class OtpService {
       },
     );
 
+    // Save otpCode in database
+    this.cacheManager.set('otp', otpCode, (60 * 10)); // Cache automatically
+    
     return true;
   }
 
@@ -81,6 +90,9 @@ export class OtpService {
       },
       order: { createdAt: 'DESC' },
     });
+
+    // Cache
+    const otpCode = this.cacheManager.get('otp'); // Cache automatically
 
     // nếu có mà thời gian hết hạn thì đợt database sẽ tự động xóa
     if (!findOtp) {

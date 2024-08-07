@@ -1,13 +1,16 @@
-import { Body, Controller, Post, Res } from '@nestjs/common';
+import { Body, Controller, Post, Res, UseInterceptors } from '@nestjs/common';
 import { ConfirmOtpDto, CreateSessionOtpDto, SendOtpDto } from './otp.dto';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { OtpService } from './otp.service';
 import { Response } from 'express';
+import { CacheInterceptor } from '@nestjs/cache-manager';
 
 @ApiTags('Otp')
 @Controller('/otp')
 export class OtpController {
-  constructor(private readonly otpService: OtpService) {}
+  constructor(
+    private readonly otpService: OtpService
+  ) {}
 
   @Post('createSessionOtp')
   @ApiOperation({ summary: 'Create a new session otp' })
@@ -23,6 +26,7 @@ export class OtpController {
   }
 
   @Post('sendOtp')
+  // @UseInterceptors(CacheInterceptor) // Cache automatically
   @ApiOperation({ summary: 'Send otp' })
   async sendOtp(@Body() dataSendEmail: SendOtpDto, @Res() res: Response) {
     await this.otpService.sendOtp(dataSendEmail.email, dataSendEmail.otpCode);

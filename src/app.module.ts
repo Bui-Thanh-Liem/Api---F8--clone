@@ -23,18 +23,18 @@ import { BullModule } from '@nestjs/bull';
     ConfigModule.forRoot({
       envFilePath: '.env.dev',
       isGlobal: true,
-      load: [mysqlConfig],
+      load: [mysqlConfig], // Save my mysqlConfig in ConfigService
     }),
 
-    //
+    // Connect database
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) =>
-        configService.get<TypeOrmModuleOptions>('mysql-config'),
-      inject: [ConfigService],
+        configService.get<TypeOrmModuleOptions>('mysql-config'), // Get mysqlConfig to configService
+      inject: [ConfigService], // Inject useFactory access mysqlConfig saved
     }),
 
-    //
+    // Queue
     BullModule.forRoot({
       redis: {
         host: 'localhost',
@@ -42,6 +42,7 @@ import { BullModule } from '@nestjs/bull';
       },
     }),
 
+    // Children modules
     UserModule,
     AuthModule,
     OtpModule,
