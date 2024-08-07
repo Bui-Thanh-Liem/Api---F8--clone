@@ -15,6 +15,7 @@ import mysqlConfig from './config/mysql.config';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { TasksModule } from './apis/tasks/tasks.module';
 import { PhotoModule } from './apis/photo/photo.module';
+import { BullModule } from '@nestjs/bull';
 
 @Module({
   imports: [
@@ -34,6 +35,13 @@ import { PhotoModule } from './apis/photo/photo.module';
     }),
 
     //
+    BullModule.forRoot({
+      redis: {
+        host: 'localhost',
+        port: 6379,
+      },
+    }),
+
     UserModule,
     AuthModule,
     OtpModule,

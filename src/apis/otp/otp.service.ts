@@ -5,11 +5,12 @@ import {
 } from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import { ConfirmOtpDto, CreateSessionOtpDto } from './otp.dto';
-import { sendMail } from 'src/helpers/mail.helper';
 import { InjectRepository } from '@nestjs/typeorm';
 import { LessThan, Repository } from 'typeorm';
 import { OtpEntity } from './otp.entity';
+import { InjectQueue } from '@nestjs/bull';
 import * as bcrypt from 'bcrypt';
+import { Queue } from 'bull';
 
 @Injectable()
 export class OtpService {
@@ -17,14 +18,26 @@ export class OtpService {
     @InjectRepository(OtpEntity)
     private otpRepository: Repository<OtpEntity>,
     private readonly userService: UserService,
+
+    @InjectQueue('send-mail')
+    private queueSendMail: Queue,
   ) {}
 
   async sendOtp(email: string, otpCode: string) {
-    const infoSend = await sendMail({
-      mailTo: email,
-      html: `<h1 style={color: "red"}>Your OTP code is ${otpCode}</h1>`,
-    });
-    return infoSend;
+
+    // Throw redis -> Consumer handle job in background
+    await this.queueSendMail.add(
+      'otp',
+      {
+        mailTo: email,
+        html: `<h1 style={color: "red"}>Your OTP code is ${otpCode}</h1>`,
+      },
+      {
+        removeOnComplete: true,
+      },
+    );
+
+    return true;
   }
 
   async createSessionOtp(dataForm: CreateSessionOtpDto): Promise<boolean> {
