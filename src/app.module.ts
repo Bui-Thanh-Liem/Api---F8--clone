@@ -17,6 +17,7 @@ import { TasksModule } from './tasks/tasks.module';
 import { PhotoModule } from './apis/photo/photo.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { BlogModule } from './apis/blogs/blogs.module';
+import { BullModule } from '@nestjs/bull';
 
 @Module({
   imports: [
@@ -24,21 +25,26 @@ import { BlogModule } from './apis/blogs/blogs.module';
     ConfigModule.forRoot({
       envFilePath: '.env.dev',
       isGlobal: true,
-      load: [mysqlConfig],
+      load: [mysqlConfig], // Save my mysqlConfig in ConfigService
     }),
 
-    //
+    // Connect database
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) =>
-        configService.get<TypeOrmModuleOptions>('mysql-config'),
-      inject: [ConfigService],
+        configService.get<TypeOrmModuleOptions>('mysql-config'), // Get mysqlConfig to configService
+      inject: [ConfigService], // Inject useFactory access mysqlConfig saved
     }),
 
-    //
-    ScheduleModule.forRoot(),
+    // Queue
+    BullModule.forRoot({
+      redis: {
+        host: 'localhost',
+        port: 6379,
+      },
+    }),
 
-    //
+    // Children modules
     UserModule,
     AuthModule,
     OtpModule,

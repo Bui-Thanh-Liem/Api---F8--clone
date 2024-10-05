@@ -1,4 +1,4 @@
-import { UnauthorizedException } from '@nestjs/common';
+import { BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as crypto from 'crypto';
 import { IDataUser } from 'src/interfaces/common/commom.interface';
@@ -25,14 +25,16 @@ export class TokenHelper {
     privateKey,
     payload,
     jwtService,
+    expiresIn,
   }: {
     privateKey: string;
     payload: IDataUser;
     jwtService: JwtService;
+    expiresIn?: string | number;
   }): Promise<string> {
     const newToken = await jwtService.signAsync(payload, {
       algorithm: 'RS256',
-      expiresIn: '1d',
+      expiresIn: expiresIn || 60, // 1d
       secret: privateKey,
     });
     return newToken;
@@ -53,9 +55,11 @@ export class TokenHelper {
       });
       return dataVerifyToken;
     } catch (error) {
-      throw new UnauthorizedException(
-        'token verification failed, please login again',
-      );
+      throw new BadRequestException(error);
     }
+  }
+
+  static async refreshToken() {
+
   }
 }

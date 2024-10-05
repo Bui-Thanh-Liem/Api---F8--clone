@@ -1,15 +1,19 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import { ConfirmOtpDto, CreateSessionOtpDto } from './otp.dto';
-import { sendMail } from 'src/helpers/mail.helper';
 import { InjectRepository } from '@nestjs/typeorm';
 import { LessThan, Repository } from 'typeorm';
 import { OtpEntity } from './otp.entity';
+import { InjectQueue } from '@nestjs/bull';
 import * as bcrypt from 'bcrypt';
+import { Queue } from 'bull';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 
 @Injectable()
 export class OtpService {
@@ -17,14 +21,32 @@ export class OtpService {
     @InjectRepository(OtpEntity)
     private otpRepository: Repository<OtpEntity>,
     private readonly userService: UserService,
+
+    @InjectQueue('send-mail')
+    private queueSendMail: Queue,
+
+    @Inject(CACHE_MANAGER) 
+    private cacheManager: Cache 
   ) {}
 
   async sendOtp(email: string, otpCode: string) {
-    const infoSend = await sendMail({
-      mailTo: email,
-      html: `<h1 style={color: "red"}>Your OTP code is ${otpCode}</h1>`,
-    });
-    return infoSend;
+
+    // Throw redis -> Consumer handle job in background
+    await this.queueSendMail.add(
+      'otp',
+      {
+        mailTo: email,
+        html: `<h1 style={color: "red"}>Your OTP code is ${otpCode}</h1>`,
+      },
+      {
+        removeOnComplete: true,
+      },
+    );
+
+    // Save otpCode in database
+    this.cacheManager.set('otp', otpCode, (60 * 10)); // Cache automatically
+    
+    return true;
   }
 
   async createSessionOtp(dataForm: CreateSessionOtpDto): Promise<boolean> {
@@ -43,15 +65,15 @@ export class OtpService {
     const salt = await bcrypt.genSalt(10);
     const hashOtp = await bcrypt.hash(otpCode, salt);
 
+    // send otp
+    const isSendOtp = await this.sendOtp(dataForm.email, otpCode);
+
     //
     await this.otpRepository.save({
       email: dataForm.email,
       otpCode: hashOtp,
       expiresAt: expiresAt,
     });
-
-    // send otp
-    const isSendOtp = await this.sendOtp(dataForm.email, otpCode);
 
     if (!isSendOtp) {
       throw new BadRequestException(
@@ -68,6 +90,9 @@ export class OtpService {
       },
       order: { createdAt: 'DESC' },
     });
+
+    // Cache
+    const otpCode = this.cacheManager.get('otp'); // Cache automatically
 
     // nếu có mà thời gian hết hạn thì đợt database sẽ tự động xóa
     if (!findOtp) {

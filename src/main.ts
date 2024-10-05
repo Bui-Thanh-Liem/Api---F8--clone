@@ -48,4 +48,4 @@ async function bootstrap() {
 }
 bootstrap();
 
-// client -> middleware -> guard -> intercaptor -> router handler -> intercaptor
+// client -> middleware -> stratery -> guard -> intercaptor -> router handler -> intercaptor
