@@ -4,19 +4,20 @@ import {
   UseInterceptors,
   UploadedFile,
   Body,
-  Res,
   Delete,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { PhotoService } from './photo.service';
-import { Response } from 'express';
 import { ResponseOk } from 'src/abstracts/ABaseResponse.abstract';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
 @Controller('photos')
+@ApiTags("Photo")
 export class PhotoController {
   constructor(private photoService: PhotoService) {}
 
   @Post()
+  @ApiOperation({summary: "Create a photo"})
   @UseInterceptors(FileInterceptor('file'))
   async createPhoto(
     @UploadedFile() file: Express.Multer.File,
@@ -29,6 +30,7 @@ export class PhotoController {
   }
 
   @Delete()
+  @ApiOperation({summary: "Delete a photo"})
   async deletePhoto(
     @Body() dataForm: { public_id: string },
   ) {

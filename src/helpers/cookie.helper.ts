@@ -17,7 +17,7 @@ export class CookieHelper {
     });
   }
 
-  static clearCookei({ name, res }: { name: string; res: Response }) {
+  static clearCookie({ name, res }: { name: string; res: Response }) {
     return res.clearCookie(name, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',

@@ -13,12 +13,14 @@ import { AuthController } from './apis/auth/auth.controller';
 import { OtpModule } from './apis/otp/otp.module';
 import mysqlConfig from './config/mysql.config';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
-import { TasksModule } from './apis/tasks/tasks.module';
+import { TasksModule } from './tasks/tasks.module';
 import { PhotoModule } from './apis/photo/photo.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { BlogModule } from './apis/blogs/blogs.module';
 
 @Module({
   imports: [
-    // Configs
+    // Configs and load
     ConfigModule.forRoot({
       envFilePath: '.env.dev',
       isGlobal: true,
@@ -34,11 +36,15 @@ import { PhotoModule } from './apis/photo/photo.module';
     }),
 
     //
+    ScheduleModule.forRoot(),
+
+    //
     UserModule,
     AuthModule,
     OtpModule,
     PhotoModule,
     TasksModule,
+    BlogModule
   ],
   controllers: [],
   providers: [],

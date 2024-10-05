@@ -7,6 +7,7 @@ import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
 import { HttpExceptionFilter } from './middlewares/errors.middleware';
+import { json, urlencoded } from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -16,6 +17,8 @@ async function bootstrap() {
   app.use(helmet()); // bảo mật reqest headers
   app.use(compression()); // nén reponse http giảm băng thông
   app.use(cookieParser()); // cookies
+  app.use(json({ limit: '10mb' })); // phân tích cú pháp dữ liệu JSON trong body của yêu cầu HTTP
+  app.use(urlencoded({extended: true, limit: "10mb"}))  // phân tích cú pháp dữ liệu dạng application/x-www-form-urlencoded
   app.useGlobalPipes(new ValidationPipe()); // xác thực và chuyển đổi dữ liệu đầu vào
   app.useGlobalFilters(new HttpExceptionFilter());
   app.enableCors({
@@ -27,7 +30,7 @@ async function bootstrap() {
 
   // Cấu hình tài liệu Swagger
   const configSwagger = new DocumentBuilder()
-    .setTitle('API Example') // Tiêu đề cho tài liệu API
+    .setTitle('API Example Test Timer Blogs') // Tiêu đề cho tài liệu API
     .setDescription('API description') // Mô tả tài liệu API
     .setVersion('1.0') // Phiên bản API
     .build();
@@ -44,6 +47,5 @@ async function bootstrap() {
   }
 }
 bootstrap();
-
 
 // client -> middleware -> guard -> intercaptor -> router handler -> intercaptor

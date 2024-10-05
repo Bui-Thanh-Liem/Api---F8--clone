@@ -1,10 +1,10 @@
-import { ABaseModal } from 'src/abstracts/ABaseModal.abstract';
+import { ABaseEntity } from 'src/abstracts/ABaseModal.abstract';
 import { Column, Entity } from 'typeorm';
 
 @Entity('user')
-export class UserEntity extends ABaseModal {
+export class UserEntity extends ABaseEntity {
   @Column()
-  fullname: string;
+  fullName: string;
 
   @Column()
   birth: string;

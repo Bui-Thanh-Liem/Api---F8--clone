@@ -18,7 +18,7 @@ export class TokenService {
   async createToken(user: UserEntity) {
     const payload: IDataUser = {
       id: user.id,
-      fullname: user.fullname,
+      fullName: user.fullName,
       email: user.email,
       birth: user.birth,
       isManager: user.isManager,

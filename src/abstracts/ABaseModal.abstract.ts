@@ -6,7 +6,7 @@ import {
   VersionColumn,
 } from 'typeorm';
 
-export abstract class ABaseModal {
+export abstract class ABaseEntity {
   @Column('uuid')
   @PrimaryGeneratedColumn('uuid')
   id: string;

@@ -1,9 +1,10 @@
 import { ReasonPhrases, StatusCodes } from 'http-status-codes';
 import { IUser } from '../models/user.model';
+import { ETypeTimer } from 'src/enums/common.enum';
 
 export interface IDataUser {
   id: string;
-  fullname: string;
+  fullName: string;
   email: string;
   birth: string;
   isManager: boolean;
@@ -26,3 +27,4 @@ export interface IBaseResponse<T> {
   statusCode?: StatusCodes;
   reasonStatusCode?: ReasonPhrases;
 }
+

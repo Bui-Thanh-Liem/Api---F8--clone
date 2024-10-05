@@ -46,7 +46,7 @@ export class AuthController {
     await this.authService.logout(req);
 
     // Clear cookies
-    CookieHelper.clearCookei({ name: 'token', res });
+    CookieHelper.clearCookie({ name: 'token', res });
     res.status(200).json({
       message: 'Logout successful',
     });

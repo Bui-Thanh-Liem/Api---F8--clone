@@ -39,14 +39,14 @@ export class UserService {
   async update(id: string, dataForm: UserDto): Promise<UserEntity> {
     //
     const findUser = await this.userRepository.findOne({
-      where: { id },
+      where: { id }
     });
     if (!findUser) {
       throw new BadRequestException(`Not found user with id ${id} !`);
     }
 
     //
-    findUser.fullname = dataForm.fullname;
+    findUser.fullName = dataForm.fullName;
     findUser.email = dataForm.email;
     findUser.birth = dataForm.birth;
 

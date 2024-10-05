@@ -24,7 +24,7 @@ export class AuthService {
       select: {
         id: true,
         email: true,
-        fullname: true,
+        fullName: true,
         password: true,
         birth: true,
         isDirector: true,
@@ -43,7 +43,7 @@ export class AuthService {
       findUserByEmail.password,
     );
     if (!isPassword) {
-      throw new BadRequestException('Password not match, please login again');
+      throw new BadRequestException('wrong username or password');
     }
 
     //

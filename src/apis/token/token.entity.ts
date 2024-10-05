@@ -1,9 +1,9 @@
 import { Entity, Column, Index, OneToOne, JoinColumn } from 'typeorm';
 import { UserEntity } from '../user/user.entity';
-import { ABaseModal } from 'src/abstracts/ABaseModal.abstract';
+import { ABaseEntity } from 'src/abstracts/ABaseModal.abstract';
 
 @Entity('token')
-export class TokenEntity extends ABaseModal {
+export class TokenEntity extends ABaseEntity {
   @Column('text') // chuỗi ký tự dài
   @Index({ fulltext: true }) // Định nghĩa một chỉ mục toàn văn
   token_code: string;

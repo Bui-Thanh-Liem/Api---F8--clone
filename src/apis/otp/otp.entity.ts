@@ -1,9 +1,9 @@
 import { IsEmpty, Length } from 'class-validator';
 import { Column, Entity } from 'typeorm';
-import { ABaseModal } from 'src/abstracts/ABaseModal.abstract';
+import { ABaseEntity } from 'src/abstracts/ABaseModal.abstract';
 
 @Entity('otp')
-export class OtpEntity extends ABaseModal {
+export class OtpEntity extends ABaseEntity {
   @Column()
   @IsEmpty()
   email: string;

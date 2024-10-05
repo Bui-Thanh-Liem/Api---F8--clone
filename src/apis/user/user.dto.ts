@@ -11,7 +11,7 @@ export class UserDto {
   // @Type(() => String)
   @MinLength(5, { message: 'This field must be at least 5 characters Liem' })
   @ApiProperty({ type: String, default: 'liem02' })
-  fullname: string;
+  fullName: string;
 
   @IsNotEmpty({ message: 'Birth is not empty' })
   @ApiProperty({ type: String, default: '08-01-2000' })
